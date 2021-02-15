@@ -1,6 +1,6 @@
 InputFileName = "arginine.txt"
 NMRExpFile = "arginine.shift"
-NumOfSamples = 1000
+NumOfSamples = 5000
 #TheMap = (-1.0459,242.36)
 TheMap = (-1.0281,243.01)
 rms_ref = 2.3
@@ -14,14 +14,15 @@ shift_data = A.LoadShiftData(NMRExpFile)
 StructuresToRetain = []
 
 for i in range(NumOfSamples):
+    if i % (NumOfSamples/10) == 0:
+        count = i/NumOfSamples * 100
+        print(str(count) + "% complete.")
     NMRFiles = InputFileName + "." + str(i) + ".magres"
     NMROutput = InputFileName + "." + str(i) + ".nmr"
     F.ProcessNMROutputFile_Castep(NMRFiles, NMROutput)
     if F.RemoveDuplicates(NMROutput) == True:
-    
         shielding_data = A.LoadShieldingData(NMROutput)
         shift_copy = shift_data[:]
-    
         shift, shielding = T.ProcessData(shift_copy, shielding_data, TheMap)
         msd = T.CalculateMSD(shift, shielding, TheMap)
         FValues = T.GetFValues(msd, rms_ref)
@@ -37,9 +38,13 @@ for i in range(NumOfSamples):
 
 NumStructs = len(StructuresToRetain)
 print("Number of Structures Retained: " + str(NumStructs))
-print("Structures retained: ")
+
+Output = open("retained_structs.txt", "w")
+lineout = ""
 for item in StructuresToRetain:
-    print(item)
+    lineout = lineout + str(item) + "\n"
+Output.write(lineout)
+Output.close()
 
 BL = []
 BH = []

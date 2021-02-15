@@ -1,32 +1,44 @@
-import random as rnd
+import TE as T
 import matplotlib.pyplot as plt
 
-xmin = 0.37638
-xmax = 1.0021
-ymin = -1.79483
-ymax = 1.4617
-zmin = -1.16424
-zmax = 2.3422
+InputFileName = "arginine.txt"
+ellipsoid_atom = "H19"
+fixed_atomtype = "N"
+
 
 xset = []
 yset = []
 zset = []
+stationary_atoms = []
+empty = True
 
-atom1 = [0,0,1.3678]
-atom2 = [2.1232,0,-0.58421]
+retained_structures = T.LoadRetainedStructures()
 
-for i in range(1500):
-    xset.append(rnd.uniform(xmin, xmax))
-    yset.append(rnd.uniform(ymin, ymax))
-    zset.append(rnd.uniform(zmin, zmax))
-
+for i in retained_structures:
+    NMRFile = InputFileName + "." + str(i) + ".nmr"
+    coord = T.LoadCoordinates(NMRFile)
+    if len(stationary_atoms) == 0:
+        empty = True
+    else:
+        empty = False
+    for j in range(0, len(coord), 4):
+        if coord[j] == ellipsoid_atom:
+            xset.append(coord[j+1])
+            yset.append(coord[j+2])
+            zset.append(coord[j+3])
+        if empty and coord[j][0] == fixed_atomtype:
+            stationary_atoms.append(coord[j+1])
+            stationary_atoms.append(coord[j+2])
+            stationary_atoms.append(coord[j+3])
+            
 fig = plt.figure(figsize=(5,5), dpi=150, frameon=True)
 ax = fig.add_subplot(111, projection='3d')
 ax.set_xlabel("x-coordinates in Ang")
 ax.set_ylabel("y-coordinates in Ang")
 ax.set_zlabel("z-coordinates in Ang")
 ax.set_title("Thermal Ellipsoid Plot")
-ax.scatter(atom1[0],atom1[1],atom1[2], c='red')
-ax.scatter(atom2[0],atom2[1],atom2[2], c='red')
+
+for j in range(0, len(stationary_atoms), 3):
+    ax.scatter(stationary_atoms[j], stationary_atoms[j+1], stationary_atoms[j+2], c='red')
 ax.scatter(xset,yset,zset, c='blue')
 plt.show()

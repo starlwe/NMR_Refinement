@@ -184,3 +184,21 @@ def OutputBoundary(BL, BH):
     hFile.close()
     
     return None
+
+def LoadRetainedStructures():
+    try:
+        hFile = open("retained_structs.txt", "r")
+    except:
+        return False
+    rs = []
+
+    while True:
+        line = hFile.readline()
+        if not line:
+            hFile.close()
+            return rs
+        try:
+            rs.append(int(line))
+        except:
+            hFile.close()
+            return rs
