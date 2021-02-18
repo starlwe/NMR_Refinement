@@ -64,13 +64,13 @@ def RunMonteCarlo(parameters, OutputParams, Debug=False):
     return None
 
 def RunSimulation(SimList, SimRad, data):
-    H = SimRad[0]
-    C = SimRad[1]
-    O = SimRad[2]
-    N = SimRad[3]
-    S = SimRad[4]
-    Cl = SimRad[5]
-    
+    HX = SimRad[0]
+    H = SimRad[1]
+    C = SimRad[2]
+    O = SimRad[3]
+    N = SimRad[4]
+    S = SimRad[5]
+    Cl = SimRad[6]
     size = len(data)
     List_of_Atoms = []
     
@@ -106,28 +106,51 @@ def RunSimulation(SimList, SimRad, data):
     for item in List_of_Atoms:
         ToSim = item.Sim
         if ToSim:
-            x,y,z = SimFunc(item,H,C,O,N,S,Cl)
-            contents.append(item._type)
-            contents.append(x)
-            contents.append(y)
-            contents.append(z)
+            x,y,z = SimFunc(item,H,C,O,N,S,Cl,HX)
+            if item._type[0:2] == "HX":
+                itemtype = "H" + item._type[2:]
+                contents.append(itemtype)
+                contents.append(x)
+                contents.append(y)
+                contents.append(z)
+            else:
+                contents.append(item._type)
+                contents.append(x)
+                contents.append(y)
+                contents.append(z)
         else:
-            contents.append(item._type)
-            contents.append(item.x)
-            contents.append(item.y)
-            contents.append(item.z)
+            if item._type[0:2] == "HX":
+                itemtype = "H" + item._type[2:]
+                contents.append(itemtype)
+                contents.append(x)
+                contents.append(y)
+                contents.append(z)
+            else:
+                contents.append(item._type)
+                contents.append(item.x)
+                contents.append(item.y)
+                contents.append(item.z)
     return contents
 
-def SimFunc(item,H,C,O,N,S,Cl):
+def SimFunc(item,H,C,O,N,S,Cl,HX):
     if len(item._type) > 1:
         twoletter = True
     else:
         twoletter = False
     while True:
-        if item._type[0] == 'H':
+        if item._type[0] == 'H' and not twoletter:
             dx = rnd.uniform(-1,1) * H
             dy = rnd.uniform(-1,1) * H
             dz = rnd.uniform(-1,1) * H
+        elif item._type[0] == 'H' and twoletter:
+            if item._type[1].isnumeric() == True:
+                dx = rnd.uniform(-1,1) * H
+                dy = rnd.uniform(-1,1) * H
+                dz = rnd.uniform(-1,1) * H
+            elif item._type[1].isnumeric() == False and item._type[1] == 'X':
+                dx = rnd.uniform(-1,1) * HX
+                dy = rnd.uniform(-1,1) * HX
+                dz = rnd.uniform(-1,1) * HX
         elif item._type[0] == 'C' and twoletter:
             if item._type[1].isnumeric() == True:
                 dx = rnd.uniform(-1,1) * C
@@ -155,13 +178,31 @@ def SimFunc(item,H,C,O,N,S,Cl):
             dz = rnd.uniform(-1,1) * S
         dr2 = dx**2 + dy**2 + dz**2
         dr = dr2**(1/2)
-        if item._type[0] == 'H':
+        if len(item._type) > 1 and item._type[0] == 'H' and item._type[1] != 'X':
             if dr <= H:
                  x = item.x + dx
                  y = item.y + dy
                  z = item.z + dz
                  return x,y,z
-        elif item._type[0] == 'C':
+        elif len(item._type) == 1 and item._type[0] == 'H':
+            if dr <= H:
+                 x = item.x + dx
+                 y = item.y + dy
+                 z = item.z + dz
+                 return x,y,z
+        elif len(item._type) > 1 and item._type[0:2] == "HX":
+            if dr <= HX:
+                 x = item.x + dx
+                 y = item.y + dy
+                 z = item.z + dz
+                 return x,y,z
+        elif len(item._type) > 1 and item._type[0] == 'C' and item._type[1] != 'l':
+            if dr <= C:
+                 x = item.x + dx
+                 y = item.y + dy
+                 z = item.z + dz
+                 return x,y,z
+        elif len(item._type) == 1 and item._type[0] == 'C':
             if dr <= C:
                  x = item.x + dx
                  y = item.y + dy
@@ -185,7 +226,7 @@ def SimFunc(item,H,C,O,N,S,Cl):
                  y = item.y + dy
                  z = item.z + dz
                  return x,y,z
-        elif len(item._type) > 1 and item._type[0] == 'C' and item._type[1] == 'l':
+        elif len(item._type) > 1 and item._type[0:2] == 'Cl':
             if dr <= Cl:
                  x = item.x + dx
                  y = item.y + dy

@@ -4,7 +4,7 @@ NumOfSamples = 5000
 #TheMap = (-1.0459,242.36)
 TheMap = (-1.0281,243.01)
 rms_ref = 2.3
-FRef = 2.0
+FRef = 1.5
 
 import FileIO as F
 import Analysis as A
@@ -21,8 +21,10 @@ for i in range(NumOfSamples):
     NMROutput = InputFileName + "." + str(i) + ".nmr"
     F.ProcessNMROutputFile_Castep(NMRFiles, NMROutput)
     if F.RemoveDuplicates(NMROutput) == True:
+    
         shielding_data = A.LoadShieldingData(NMROutput)
         shift_copy = shift_data[:]
+    
         shift, shielding = T.ProcessData(shift_copy, shielding_data, TheMap)
         msd = T.CalculateMSD(shift, shielding, TheMap)
         FValues = T.GetFValues(msd, rms_ref)

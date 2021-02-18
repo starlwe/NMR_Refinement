@@ -3,21 +3,22 @@ InputFileName = "arginine.txt"
 UnitCellParam = "arginine.unitcell"
 NMRExpFile = "arginine.shift"
 InputFormat = "cart"
-SimRadius_H = 0.04
-SimRadius_C = 0.015
-SimRadius_O = 0.015
-SimRadius_N = 0.015
-SimRadius_S = 0.0
-SimRadius_Cl= 0.0
+SimRadius_H = 0.3
+SimRadius_C = 0.1
+SimRadius_O = 0.1
+SimRadius_N = 0.1
+SimRadius_S = 0.1
+SimRadius_Cl= 0.1
+SimRadius_HX= 1.75
 SimList = []
-NumOfSteps = 100
-TheMap = (-1.0459,242.36)
+NumOfSteps = 10000
+TheMap = (-1.0281, 243.01)
 
 from MonteCarloSim import *
 from FileIO import *
 from Analysis import *
 
-opcode = 2
+opcode = 1
 
 if opcode == 1:
     unitcell_param = LoadUnitCellParameters(UnitCellParam)
@@ -32,12 +33,12 @@ if opcode == 1:
     
     cell = ('%BLOCK LATTICE_ABC\n',str(a) + ' ' + str(b) + ' ' + str(c) + '\n',str(alpha) + ' ' + str(beta) + ' ' + str(gamma) + '\n',
             '%ENDBLOCK LATTICE_ABC\n\n', 'fix_all_cell : true\n', "symmetry_generate\n", 'fix_com : false\n',
-            "kpoints_mp_spacing : 0.05\n\n")
-    param = ('xcfunctional : PW91\n','opt_strategy : speed\n','task : magres\n','fix_occupancy : true\n',
-            'finite_basis_corr : 0\n','elec_energy_tol : 1.0e-8\n','basis_precision : precise\n', 'spin_polarized : false')
+            "kpoints_mp_spacing : 0.04\n\n")
+    param = ('xcfunctional : RPBE\n','opt_strategy : speed\n','task : magres\n','fix_occupancy : true\n',
+            'finite_basis_corr : 0\n','elec_energy_tol : 1.0e-12\n','basis_precision : extreme\n', 'spin_polarized : false')
     
     OutputParams = (cell, param)
-    SimRad = [SimRadius_H,SimRadius_C,SimRadius_O, SimRadius_N, SimRadius_S, SimRadius_Cl]
+    SimRad = [SimRadius_HX,SimRadius_H,SimRadius_C,SimRadius_O, SimRadius_N, SimRadius_S, SimRadius_Cl]
     parameters = (InputFileName,InputFormat,SimList,NumOfSteps,SimRad, unitcell_param)
     RunMonteCarlo(parameters, OutputParams, True)
 
@@ -48,6 +49,6 @@ if opcode == 2:
         NMROutput = InputFileName + "." + str(i) + ".nmr"
         ProcessNMROutputFile_Castep(NMRFiles, NMROutput)
     
-    FileNum, R2 = FindBestFit(InputFileName, NMRExpFile, NumOfSteps, TheMap, True, True)
+    FileNum, R2 = FindBestFit(InputFileName, NMRExpFile, NumOfSteps, TheMap, True)
     print("Structure " + str(FileNum)+" has the best fit to the experimental data with R^2 value of " + str(R2) + ".")
     DisplayPoorFits(FileNum, InputFileName, NMRExpFile, TheMap)

@@ -1,5 +1,5 @@
-InputFileName = "test.txt"
-UnitCellParam = "test.unitcell"
+InputFileName = "arginine2.txt"
+UnitCellParam = "arginine.unitcell"
 # 2: xyz to Fractional
 # 1: Fractional to XYZ
 
@@ -97,6 +97,8 @@ def WriteCell(data):
                 + " " + str(data.pop(0)) + "\n"
             size = size - 4
             hFile.write(line)
+    line = "\n"
+    hFile.write(line)
     hFile.close()
     return None
 
