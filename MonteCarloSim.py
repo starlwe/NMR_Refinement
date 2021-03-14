@@ -32,6 +32,9 @@ def RunMonteCarlo(parameters, OutputParams, Debug=False):
         data = LoadInputFileContents(InputFileName)
 
     for i in range(NumOfSteps):
+        if i % (NumOfSteps / 10) == 0:
+            count = i / NumOfSteps * 100
+            print(str(count) + "% complete.")
         datacopy = data[:]
         OutputContent = RunSimulation(SimList, SimRad, datacopy)
         if Debug == True:
