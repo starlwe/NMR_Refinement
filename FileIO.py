@@ -138,10 +138,10 @@ def WriteCastepFullUnitCell(InputFile, i, data, OutputParams):
     hFile.close()
     return None
 
-def RemoveDuplicates(NMRFile):
+def RemoveDuplicates(NMRFileIn, NMRFileOut):
     data = []
     try:
-        hFile = open(NMRFile, 'r')
+        hFile = open(NMRFileIn, 'r')
     except:
         return False
     line="not empty"
@@ -195,7 +195,7 @@ def RemoveDuplicates(NMRFile):
         lineout = lineout + udata.pop(0) + " " + udata.pop(0) + " " + udata.pop(0) + " " + udata.pop(0) + \
         " " + udata.pop(0) + " " + udata.pop(0) + " " + udata.pop(0) + "\n"
     
-    hFile  = open(NMRFile, 'w')
+    hFile  = open(NMRFileOut, 'w')
     hFile.write(lineout)
     hFile.close()
     return True

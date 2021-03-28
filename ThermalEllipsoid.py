@@ -1,7 +1,6 @@
 InputFileName = "arginine.txt"
 NMRExpFile = "arginine.shift"
-NumOfSamples = 5000
-#TheMap = (-1.0459,242.36)
+NumOfSamples = 4000
 TheMap = (-1.0281,243.01)
 rms_ref = 2.3
 FRef = 1.5
@@ -19,10 +18,11 @@ for i in range(NumOfSamples):
         print(str(count) + "% complete.")
     NMRFiles = InputFileName + "." + str(i) + ".magres"
     NMROutput = InputFileName + "." + str(i) + ".nmr"
+    NMROutNoDup = InputFileName + "." + str(i) + ".nnd"
     F.ProcessNMROutputFile_Castep(NMRFiles, NMROutput)
-    if F.RemoveDuplicates(NMROutput) == True:
+    if F.RemoveDuplicates(NMROutput, NMROutNoDup) == True:
     
-        shielding_data = A.LoadShieldingData(NMROutput)
+        shielding_data = A.LoadShieldingData(NMROutNoDup)
         shift_copy = shift_data[:]
     
         shift, shielding = T.ProcessData(shift_copy, shielding_data, TheMap)
@@ -53,7 +53,7 @@ BH = []
 
 for j in range(NumStructs):
     k = StructuresToRetain[j]
-    NMROutput = InputFileName + "." + str(k) + ".nmr"
+    NMROutput = InputFileName + "." + str(k) + ".nnd"
     Coordinates = T.LoadCoordinates(NMROutput)
     T.FindBoundary(Coordinates, BL, BH)
 
