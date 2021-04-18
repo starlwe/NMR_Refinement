@@ -3,7 +3,9 @@ from scipy import stats
 import numpy as np
 
 ZeroDetect = False
-
+a2 = (5.0 + 5.0**(1/2)) / 10.0
+b2 = (5.0 - 5.0**(1/2)) / 10.0
+    
 def DisplayPoorFits(Num, FileName, ShiftFile, TheMap):
     InputFile = FileName + '.' + str(Num) + ".nmr"
     shift_data = LoadShiftData(ShiftFile)
@@ -13,47 +15,61 @@ def DisplayPoorFits(Num, FileName, ShiftFile, TheMap):
     R2, m, b = LinearFit(shift, shielding, TheMap)
     shift = []
     shielding = []
-    line = "Structure " + str(Num) + "\n\n"
-    ANum = 0
-    Sum = 0
-    Num_Items = 0
+    line = "Structure " + str(Num) + "\n"
+    
     while True:
         if shift_data == [] or shielding_data == []:
             break
         elif shift_data[0] == shielding_data[0]:
             shift_data.pop(0)
             shielding_data.pop(0)
-            shift.append(shift_data.pop(0))
-            shift.append(shift_data.pop(0))
-            shift.append(shift_data.pop(0))
-            shielding.append(shielding_data.pop(0))
-            shielding.append(shielding_data.pop(0))
-            shielding.append(shielding_data.pop(0))
+            
+            XX = float(shift_data.pop(0))
+            YY = float(shift_data.pop(0))
+            ZZ = float(shift_data.pop(0))
+            xx = float(shielding_data.pop(0))
+            yy = float(shielding_data.pop(0))
+            zz = float(shielding_data.pop(0))
+            
+            ixx = a2*xx + b2*yy
+            iyy = a2*yy + b2*zz
+            izz = a2*zz + b2*xx
+            
+            iXX = a2*XX + b2*YY
+            iYY = a2*YY + b2*ZZ
+            iZZ = a2*ZZ + b2*XX            
+        
+            shift.append(iXX)
+            shift.append(iYY)
+            shift.append(iZZ)
+            shielding.append(ixx)
+            shielding.append(iyy)
+            shielding.append(izz)
         else:
             shielding_data.pop(0)
             shielding_data.pop(0)
             shielding_data.pop(0)
             shielding_data.pop(0)
-    for i in range(len(shift)):
-        y = m * float(shift[i]) + b
-        if i % 3 == 0:
-            diff = FindMinDiff(shielding[i], shielding[i+2], y)
-        elif i % 3 == 1:
-            diff = float(shielding[i]) - y
-        elif i % 3 == 2:
-            diff = FindMinDiff(shielding[i-2], shielding[i], y)
-        df2 = diff**2
-        Sum = Sum + df2
-        Num_Items = i
-        if i % 3 == 0:
-            ANum = ANum + 1
-        line = line + "Atom " + str(ANum) + " difference^2: " + str(df2) + "\n"
-    hFile = open("DiffFile.txt", 'w')
+        
+        #if i % 3 == 0:
+        #    diff = FindMinDiff(shielding[i], shielding[i+2], y)
+        #elif i % 3 == 1:
+        #    diff = float(shielding[i]) - y
+        #elif i % 3 == 2:
+        #    diff = FindMinDiff(shielding[i-2], shielding[i], y)
+        #df2 = diff**2
+        #Sum = Sum + df2
+        #Num_Items = i
+        #if i % 3 == 0:
+        #    ANum = ANum + 1
+        #line = line + "Atom " + str(ANum) + " difference^2: " + str(df2) + "\n"
+        
+    hFile = open("DiffFile.txt", 'a')
     line = line + "\nR^2: " + str(R2) + "\n"
     line = line + "Eqn: y = " + str(m) + "x + " + str(b) + "\n"
-    Num_Items = Num_Items + 1
+
     RMS = CalculateRMSError(shift, shielding, TheMap)
-    line = line + "RMS Error: " + str(RMS) + "\n"
+    line = line + "RMS Error: " + str(RMS) + " ppm\n\n"
     hFile.write(line)
     hFile.close()
     return None
@@ -72,8 +88,7 @@ def FindBestFit(NMRFileBase, NMRExpFile, NumOfPoints, TheMap, Debug = False, RMS
     shift_data = LoadShiftData(NMRExpFile)
     BestFit = []
     MaxR2 = 0.0
-    Num_Items = 0
-    Sum = 0
+    
     global ZeroDetect
     MinRMS = 1000000
     
@@ -190,28 +205,43 @@ def LoadShieldingData(InputFile):
             shielding_data.append(yy)
             shielding_data.append(zz)
 
-def LinearFit(shift_data, shielding_data, TheMap):
+def LinearFit(shift_data, shielding_data, TheMap):    
     shift = []
     shielding = []
-    i = 0
+
     while True:
         if shift_data == [] or shielding_data == []:
             break
         elif shift_data[0] == shielding_data[0]:
             shift_data.pop(0)
             shielding_data.pop(0)
-            shift.append(shift_data.pop(0))
-            shift.append(shift_data.pop(0))
-            shift.append(shift_data.pop(0))
+            XX = shift_data.pop(0)
+            YY = shift_data.pop(0)
+            ZZ = shift_data.pop(0)
             xx = shielding_data.pop(0)
             yy = shielding_data.pop(0)
             zz = shielding_data.pop(0)
-            y = TheMap[0] * float(shift[i]) + TheMap[1]
-            xx, zz = FindMatch(xx, zz, y)
-            shielding.append(xx)
-            shielding.append(yy)
-            shielding.append(zz)
-            i = i + 3
+
+            cXX = (float(xx) - TheMap[1]) / TheMap[0]
+            
+            XX, ZZ = FindMatch(XX, ZZ, cXX)
+            
+            # Convert to Icosahedral
+            ixx = a2*xx + b2*yy
+            iyy = a2*yy + b2*zz
+            izz = a2*zz + b2*xx
+            
+            iXX = a2*XX + b2*YY
+            iYY = a2*YY + b2*ZZ
+            iZZ = a2*ZZ + b2*XX
+            
+            shielding.append(ixx)
+            shielding.append(iyy)
+            shielding.append(izz)
+            shift.append(iXX)
+            shift.append(iYY)
+            shift.append(iZZ)
+
         else:
             shielding_data.pop(0)
             shielding_data.pop(0)
@@ -291,29 +321,33 @@ def CalculateRMSError(shift_o, shielding_o, TheMap):
     shielding = shielding_o[:]
     
     while shift != [] or shielding != []:
-        xx = float(shift.pop(0))
-        yy = float(shift.pop(0))
-        zz = float(shift.pop(0))
-        sxx = float(shielding.pop(0))
-        syy = float(shielding.pop(0))
-        szz = float(shielding.pop(0))
+        XX = float(shift.pop(0))
+        YY = float(shift.pop(0))
+        ZZ = float(shift.pop(0))
+        xx = float(shielding.pop(0))
+        yy = float(shielding.pop(0))
+        zz = float(shielding.pop(0))
         
-        XX = xx * TheMap[0] + TheMap[1]
-        YY = yy * TheMap[0] + TheMap[1]
-        ZZ = zz * TheMap[0] + TheMap[1]
+        cXX = (float(xx) - TheMap[1]) / TheMap[0]
+        cYY = (float(yy) - TheMap[1]) / TheMap[0]
+        cZZ = (float(zz) - TheMap[1]) / TheMap[0]
         
-        sxx, szz = FindMatch(sxx,szz,XX)
+        cXX, cZZ = FindMatch(cXX,cZZ,XX)
         
-        _err1 = 3*((XX-sxx)**2) + 3*((YY-syy)**2) + 3*((ZZ-szz)**2)
-        _err2 = 2*(XX-sxx)*(YY-syy) + 2*(XX-sxx)*(ZZ-szz) + 2*(YY-syy)*(ZZ-szz)
-        _err3 = _err1 + _err2
-        d2 = (1/15) * _err3
+        _errx = (XX - cXX)**2
+        _erry = (YY - cYY)**2
+        _errz = (ZZ - cZZ)**2
+        _sum = _errx + _erry + _errz
         
-        sum = sum + d2
-        Num_Items = Num_Items + 1
+        sum = sum + _sum
+        Num_Items = Num_Items + 3
     
     _rms = sum / Num_Items
     RMS = _rms**(1/2)
+    #print("debug: num_items = " + str(Num_Items))
+    #print("debug: sum = " + str(sum))
+    #print("debug: rms^2 = " + str(_rms))
+    #print("debug: rms = " + str(RMS))
          
     return RMS
 
@@ -323,30 +357,59 @@ def PlotBestFit(i, NMRFileBase, NMRExpFile, TheMap):
     shielding_data = LoadShieldingData(NMRFile)
     shift = []
     shielding = []
-    i = 0
+    #i = 0
     while True:
         if shift_data == [] or shielding_data == []:
             break
         elif shift_data[0] == shielding_data[0]:
             shift_data.pop(0)
             shielding_data.pop(0)
-            shift.append(shift_data.pop(0))
-            shift.append(shift_data.pop(0))
-            shift.append(shift_data.pop(0))
+            
+            XX = shift_data.pop(0)
+            YY = shift_data.pop(0)
+            ZZ = shift_data.pop(0)
             xx = shielding_data.pop(0)
             yy = shielding_data.pop(0)
             zz = shielding_data.pop(0)
-            y = TheMap[0] * float(shift[i]) + TheMap[1]
-            xx, zz = FindMatch(xx, zz, y)
-            shielding.append(xx)
-            shielding.append(yy)
-            shielding.append(zz)
-            i = i + 3
+
+            cXX = (float(xx) - TheMap[1]) / TheMap[0]
+            
+            XX, ZZ = FindMatch(XX, ZZ, cXX)
+            
+            # Convert to Icosahedral
+            ixx = a2*xx + b2*yy
+            iyy = a2*yy + b2*zz
+            izz = a2*zz + b2*xx
+            
+            iXX = a2*XX + b2*YY
+            iYY = a2*YY + b2*ZZ
+            iZZ = a2*ZZ + b2*XX
+            
+            shielding.append(ixx)
+            shielding.append(iyy)
+            shielding.append(izz)
+            shift.append(iXX)
+            shift.append(iYY)
+            shift.append(iZZ)
+            
+            #shift.append(shift_data.pop(0))
+            #shift.append(shift_data.pop(0))
+            #shift.append(shift_data.pop(0))
+            #xx = shielding_data.pop(0)
+            #yy = shielding_data.pop(0)
+            #zz = shielding_data.pop(0)
+            #y = TheMap[0] * float(shift[i]) + TheMap[1]
+            #xx, zz = FindMatch(xx, zz, y)
+            #shielding.append(xx)
+            #shielding.append(yy)
+            #shielding.append(zz)
+            #i = i + 3
         else:
             shielding_data.pop(0)
             shielding_data.pop(0)
             shielding_data.pop(0)
             shielding_data.pop(0)
+            
     x = np.array(shift, dtype = np.float64)
     y = np.array(shielding, dtype = np.float64)
     m, b, r, p, stderr = stats.linregress(x,y)
