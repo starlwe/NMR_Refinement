@@ -1,18 +1,14 @@
-InputFileName = "naphta06.castep"
-OutputFile = "naphta06.txt"
+InputFileName = "naphta06_geo.castep"
+OutputFile = "naphta06_geo.txt"
 
 def LoadInputFileContents(InputFile):
     data = []
     hFile = open(InputFile, 'r')
-    i=0
+
     while True:
         line = hFile.readline()
         item = line.split()
-        i=i+1
-        print("line " + str(i))
-        if i == 3837:
-            print(line)
-            print(item[0],item[1],item[2])
+
         if len(item) > 2 and item[0] == "BFGS:":
             if item[1] == "Final" and item[2] == "Configuration:":
                 break

@@ -33,9 +33,9 @@ if opcode == 1:
     
     cell = ('%BLOCK LATTICE_ABC\n',str(a) + ' ' + str(b) + ' ' + str(c) + '\n',str(alpha) + ' ' + str(beta) + ' ' + str(gamma) + '\n',
             '%ENDBLOCK LATTICE_ABC\n\n', 'fix_all_cell : true\n', "symmetry_generate\n", 'fix_com : false\n',
-            "kpoints_mp_spacing : 0.04\n\n")
+            "kpoints_mp_spacing : 0.05\n\n")
     param = ('xcfunctional : RPBE\n','opt_strategy : speed\n','task : magres\n','fix_occupancy : true\n',
-            'finite_basis_corr : 0\n','elec_energy_tol : 1.0e-12\n','basis_precision : extreme\n', 'spin_polarized : false')
+            'finite_basis_corr : 0\n','elec_energy_tol : 1.0e-10\n','basis_precision : precise\n', 'spin_polarized : false')
     
     OutputParams = (cell, param)
     SimRad = [SimRadius_HX,SimRadius_H,SimRadius_C,SimRadius_O, SimRadius_N, SimRadius_S, SimRadius_Cl]
