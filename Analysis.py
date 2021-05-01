@@ -87,7 +87,7 @@ def FindMinDiff(s1, s2, y):
 def FindBestFit(NMRFileBase, NMRExpFile, NumOfPoints, TheMap, Debug = False, RMSD = False):
     shift_data = LoadShiftData(NMRExpFile)
     BestFit = []
-    MaxR2 = 0.0
+    MinDiff = 1000000
     
     global ZeroDetect
     MinRMS = 1000000
@@ -101,15 +101,15 @@ def FindBestFit(NMRFileBase, NMRExpFile, NumOfPoints, TheMap, Debug = False, RMS
             R2 = 0.0
             ZeroDetect = True
         else:
-            R2, m, b = LinearFit(shift_copy, shielding_copy, TheMap)
+            R2, m, b, MaxDiff = LinearFit(shift_copy, shielding_copy, TheMap)
         if Debug == True:
             print(str(i) + " " + str(R2))
         if RMSD == False:
-            if R2 > MaxR2:
-                MaxR2 = R2
+            if MaxDiff < MinDiff:
+                MinDiff = MaxDiff
                 if BestFit == []:
                     BestFit.append(i)
-                    BestFit.append(MaxR2)
+                    BestFit.append(R2)
                     BestFit.append(m)
                     BestFit.append(b)
                 else:
@@ -118,7 +118,7 @@ def FindBestFit(NMRFileBase, NMRExpFile, NumOfPoints, TheMap, Debug = False, RMS
                     BestFit.pop(0)
                     BestFit.pop(0)
                     BestFit.append(i)
-                    BestFit.append(MaxR2)
+                    BestFit.append(R2)
                     BestFit.append(m)
                     BestFit.append(b)
         elif RMSD == True and shielding_data != []:
@@ -250,8 +250,40 @@ def LinearFit(shift_data, shielding_data, TheMap):
     x = np.array(shift, dtype = np.float64)
     y = np.array(shielding, dtype = np.float64)
     m, b, r, p, stderr = stats.linregress(x,y)
+    MaxDiff = FindMaxDiff(m, b, shift, shielding)
     r2 = r**2
-    return r2, m, b
+    return r2, m, b, MaxDiff
+
+def FindMaxDiff(m, b, shift, shielding):
+    MaxDiff = 0
+    
+    for i in range(0,len(shift),3):
+        XX = float(shift[i])
+        YY = float(shift[i+1])
+        ZZ = float(shift[i+2])
+        xx = float(shielding[i])
+        yy = float(shielding[i+1])
+        zz = float(shielding[i+2])
+        
+        cXX = (xx - b) / m
+        cYY = (yy - b) / m
+        cZZ = (zz - b) / m
+        
+        cXX, cZZ = FindMatch(cXX,cZZ,XX)
+        
+        _errx = (XX - cXX)**2
+        _erry = (YY - cYY)**2
+        _errz = (ZZ - cZZ)**2
+        
+        if _errx > MaxDiff:
+            MaxDiff = _errx
+        if _erry > MaxDiff:
+            MaxDiff = _erry
+        if _errz > MaxDiff:
+            MaxDiff = _errz
+    
+    return MaxDiff
+        
 
 def _ProcessData(shift_data, shielding_data, TheMap):
     shift = []
