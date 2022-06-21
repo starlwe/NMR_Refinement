@@ -1,4 +1,5 @@
 InputFileName = "arginine2.txt"
+OutputFileName = ""
 UnitCellParam = "arginine.unitcell"
 # 2: xyz to Fractional
 # 1: Fractional to XYZ
@@ -84,7 +85,7 @@ def _XYZToFrac(a,b,c,alpha,beta,gamma,X,Y,Z):
     return x,y,z
 
 def WriteCell(data):
-    OutputFile = InputFileName
+    OutputFile = OutputFileName
     
     hFile = open(OutputFile,'w')
     line = ""

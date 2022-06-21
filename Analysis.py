@@ -12,7 +12,7 @@ def DisplayPoorFits(Num, FileName, ShiftFile, TheMap):
     shielding_data = LoadShieldingData(InputFile)
     shift = shift_data[:]
     shielding = shielding_data[:]
-    R2, m, b = LinearFit(shift, shielding, TheMap)
+    R2, m, b, MaxDiff = LinearFit(shift, shielding, TheMap)
     shift = []
     shielding = []
     line = "Structure " + str(Num) + "\n"
@@ -30,7 +30,12 @@ def DisplayPoorFits(Num, FileName, ShiftFile, TheMap):
             xx = float(shielding_data.pop(0))
             yy = float(shielding_data.pop(0))
             zz = float(shielding_data.pop(0))
-            
+
+            if(xx > zz):
+                xx, zz = zz, xx
+            if(XX < ZZ):
+                XX, ZZ = ZZ, XX
+                
             ixx = a2*xx + b2*yy
             iyy = a2*yy + b2*zz
             izz = a2*zz + b2*xx
@@ -68,7 +73,7 @@ def DisplayPoorFits(Num, FileName, ShiftFile, TheMap):
     line = line + "\nR^2: " + str(R2) + "\n"
     line = line + "Eqn: y = " + str(m) + "x + " + str(b) + "\n"
 
-    RMS = CalculateRMSError(shift, shielding, TheMap)
+    RMS = CalculateRMSError(shift, shielding, TheMap, Num)
     line = line + "RMS Error: " + str(RMS) + " ppm\n\n"
     hFile.write(line)
     hFile.close()
@@ -100,6 +105,7 @@ def FindBestFit(NMRFileBase, NMRExpFile, NumOfPoints, TheMap, Debug = False, RMS
         if shielding_data == []:
             R2 = 0.0
             ZeroDetect = True
+            #continue
         else:
             R2, m, b, MaxDiff = LinearFit(shift_copy, shielding_copy, TheMap)
         if Debug == True:
@@ -257,6 +263,11 @@ def LinearFit(shift_data, shielding_data, TheMap):
 def FindMaxDiff(m, b, shift, shielding):
     MaxDiff = 0
     
+    x=3.14
+    y = m*x + b
+    m = -1.0
+    b = y - (m*x)
+    
     for i in range(0,len(shift),3):
         XX = float(shift[i])
         YY = float(shift[i+1])
@@ -346,7 +357,8 @@ def CalcRMSDPair(xx, yy, zz, sxx, syy, szz, TheMap):
     d = _err4**(1/2)
     return d
 
-def CalculateRMSError(shift_o, shielding_o, TheMap):
+def CalculateRMSError(shift_o, shielding_o, TheMap, Num):
+    debug = False
     sum = 0
     Num_Items = 0
     shift = shift_o[:]
@@ -359,17 +371,36 @@ def CalculateRMSError(shift_o, shielding_o, TheMap):
         xx = float(shielding.pop(0))
         yy = float(shielding.pop(0))
         zz = float(shielding.pop(0))
+        if debug:
+            print("Shift XX = ", XX)
+            print("Shielding xx = ", xx)
+            print("Shift ZZ = ", ZZ)
+            print("Shielding zz = ", zz)
+            
         
         cXX = (float(xx) - TheMap[1]) / TheMap[0]
         cYY = (float(yy) - TheMap[1]) / TheMap[0]
         cZZ = (float(zz) - TheMap[1]) / TheMap[0]
+
+        if debug:
+            print("Calc Shift cxx = ", cXX)
+            print("Calc Shift czz = ", cZZ)
         
         cXX, cZZ = FindMatch(cXX,cZZ,XX)
-        
+
+        if debug:
+            print("After match")
+            print("Calc Shift cxx = ", cXX)
+            print("Calc Shift czz = ", cZZ)
+            
         _errx = (XX - cXX)**2
         _erry = (YY - cYY)**2
         _errz = (ZZ - cZZ)**2
         _sum = _errx + _erry + _errz
+
+        if debug:
+            print("Error in x = ", _errx)
+            print("Sum of three = ", _sum)
         
         sum = sum + _sum
         Num_Items = Num_Items + 3
